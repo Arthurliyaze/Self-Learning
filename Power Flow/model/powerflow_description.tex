@@ -1,0 +1,273 @@
+\documentclass[journal,12pt,onecolumn,draftclsnofoot]{IEEEtran}
+
+\pagestyle{plain}	
+
+\usepackage{url}
+\usepackage[utf8]{inputenc}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bbm}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{cite}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage[justification=centering]{caption}
+\usepackage{algorithm, algorithmic}
+\usepackage{xcolor}
+\usepackage{pifont}
+
+
+\usepackage{amsthm}
+\renewcommand\qedsymbol{$\blacksquare$}
+
+\newsavebox{\ieeealgbox}
+\newenvironment{boxedalgorithmic}
+  {\begin{lrbox}{\ieeealgbox}
+   \begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule}
+   \begin{algorithmic}}
+  {\end{algorithmic}
+   \end{minipage}
+   \end{lrbox}\noindent\fbox{\usebox{\ieeealgbox}}}
+
+\newcommand{\V}{\boldsymbol{V}}
+\newcommand{\I}{\boldsymbol{I}}
+\newcommand{\Z}{\boldsymbol{Z}}
+\newcommand{\Y}{\boldsymbol{Y}}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+\newcommand{\x}{\boldsymbol{x}}
+\newcommand{\icol}[1]{% inline column vector
+  \left[\begin{matrix}#1\end{matrix}\right]%
+}
+
+\newcommand{\irow}[1]{% inline row vector
+  \begin{smallmatrix}(#1)\end{smallmatrix}%
+}
+\newcommand{\J}{\boldsymbol{J}}
+\newcommand{\F}{\boldsymbol{F}}
+\newcommand{\Pb}{\boldsymbol{P}}
+\newcommand{\Q}{\boldsymbol{Q}}
+\newcommand{\Hb}{\boldsymbol{H}}
+\newcommand{\Nb}{\boldsymbol{N}}
+\newcommand{\K}{\boldsymbol{K}}
+\newcommand{\Lb}{\boldsymbol{L}}
+
+\usepackage{multirow}
+\usepackage{longtable}
+\newcommand{\tabincell}[2]{\begin{tabular}{@{}#1@{}}#2\end{tabular}}
+
+\theoremstyle{definition}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{definition}{Definition}
+\newtheorem{comment}{Comment}
+
+
+\usepackage{array}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+
+\DeclareMathOperator*{\argmin}{arg\,min} 
+
+\IEEEoverridecommandlockouts
+
+
+\graphicspath{{./figures/}}
+
+
+\begin{document}
+\title{Power flow calculation}
+\maketitle
+\section{Introduction}
+\subsection{Basics of AC circuit analysis}
+\begin{enumerate}
+\item Single phase in vector form:
+\begin{enumerate}
+\item Voltage: $\V = |\V|\angle\delta_{v}$
+\item Current: $\I = |\I|\angle\delta_{i}$
+\end{enumerate}
+
+\item Volt-ampere characteristics:
+\begin{enumerate}
+\item Basics described in the table below, where $\omega$ is the angle frequency.
+\begin{table}[h]
+\renewcommand{\arraystretch}{1.3}
+\label{VA}
+\centering
+\begin{tabular}{clc}
+\hline
+\bfseries Type of elements & \bfseries Time domain & \bfseries Vector form \\
+\hline
+Resistor & $v(t) = Ri(t)$ & $\V = R\I$\\
+Inductor & $v(t) = L\frac{di(t)}{dt}$ & $\V = j\omega L\I$ ($X_L = \omega L$)\\
+Capacitor & $i(t) = C\frac{dv(t)}{dt}$ & $\V = -j\frac1{\omega C}\I$ ($X_C = -\frac1{\omega C}$)\\
+\hline
+\end{tabular}
+\end{table}
+\item Impedance ($\Omega$): $\Z = R + jX$, $X = X_L + X_C = \omega L-\frac1{\omega C}$
+\item Admittance ($S$): $\Y = \frac1{\Z} = \frac1{R + jX}$
+\item Conductance: $G = Re\{\Y\} = \frac R{R^2+X^2}$
+\item Susceptance: $B = Im\{\Y\} = -\frac X{R^2+X^2}$
+\end{enumerate}
+
+\item Power analysis:
+\begin{table}[h]
+\renewcommand{\arraystretch}{1.3}
+\label{power}
+\centering
+\begin{tabular}{clc}
+\hline
+\bfseries Type of power & \bfseries 1 Phase & \bfseries 3 Phase \\
+\hline
+Active power (W) & $P = |\V||\I|\cos(\delta_v-\delta_i)$ & $P = \sqrt{3}|\V||\I|\cos(\delta_v-\delta_i)$\\
+Reactive power (VAR) & $Q = |\V||\I|\sin(\delta_v-\delta_i)$ & $Q = \sqrt{3}|\V||\I|\sin(\delta_v-\delta_i)$\\
+Apparent power (VA) & $S = |\V||\I| = \sqrt{P^2+Q^2}$ & $S = 3|\V||\I| = \sqrt{P^2+Q^2}$\\
+\hline
+\end{tabular}
+\end{table}
+\end{enumerate}
+
+\subsection{Per-unit presentation}
+Assuming that the independent base values are apparent power and voltage magnitude, we have:
+\begin{align*}
+S_{\text{base}} = 1 \text{ pu}, V_{\text{base}} = 1 \text{ pu}
+\end{align*}
+then from the equations in A 3), the rest of the units can be derived:
+\begin{align*}
+I_{\text{base}} = \frac{S_{\text{base}}}{V_{\text{base}}} = 1 \text{ pu}\\
+Z_{\text{base}} = \frac{V_{\text{base}}^2}{S_{\text{base}}} = 1 \text{ pu}\\
+Y_{\text{base}} = \frac{1}{Z_{\text{base}}} = 1 \text{ pu}\\
+\end{align*}
+
+\section{Powerflow}
+\subsection{Motivation}
+Power flow studies are employed by transmission and utility companies and are of extreme
+importance in transmission expansion planning (TEP), operation, and control.
+\subsection{Bus Admittance Matrix}
+\begin{align*}
+\Y_{\text{bus}} = 
+\begin{bmatrix}
+Y_{11} & \cdots & Y_{1n} \\
+\vdots & \ddots & \vdots \\
+Y_{n1} & \cdots & Y_{nn}
+\end{bmatrix}
+\end{align*}
+where each element $Y_{ij}=G_{ij}+jB_{ij}$, $n$ is the total number of buses in the system. Denote the current and voltage of the buses as $\I_{\text{bus}}$ and $\V_{\text{bus}}$, respectively, we can describe a given network:
+\begin{align}
+\I_{\text{bus}} = \Y_{\text{bus}}\V_{\text{bus}}
+\end{align}
+Using Kirchhoff's current law, the current entering the $k$-th bus can be expressed by:
+\begin{align}
+\I_k = \sum_{i=1}^n \Y_{ki}\V_i
+\end{align}
+Then given the voltages on each bus $\V_{\text{bus}}$, the bus power injections can be calculated as:
+\begin{align}
+\label{node}
+P_k = \sum_{i=1}^n |\V_i||\V_k|[G_{ki}\cos(\delta_k-\delta_i)+B_{ki}\sin(\delta_k-\delta_i)]\\
+Q_k = \sum_{i=1}^n |\V_i||\V_k|[G_{ki}\sin(\delta_k-\delta_i)-B_{ki}\cos(\delta_k-\delta_i)]
+\end{align}
+\subsection{Classical Formulation}
+Note that at each bus, there are four variables ($|\V|,\delta,P,Q$) to be known to fully define the power flow. In classical power flow formulation, two of the four variables need to be specified (known) to calculate the other two. Based on the known variables, the buses in a system can be divided into three types:
+\begin{table}[h]
+\renewcommand{\arraystretch}{1.3}
+\label{bus_type}
+\centering
+\begin{tabular}{clcccc}
+\hline
+\bfseries Type of bus & $|\V|$ & $\delta$ & $P$ & $Q$ & Represent\\
+\hline
+Constant power bus (PQ) & \xmark & \xmark & \cmark & \cmark & Loads\\
+Voltage controlled bus (PV) & \cmark & \xmark & \cmark & \xmark & Generators\\
+Swing (or slack) bus (SW) & \cmark & \cmark & \xmark &\xmark & Large generators control the frequency\\
+\hline
+\end{tabular}
+\end{table}
+The unknown variables that the system can control are bus voltages and angles, so the power flow calculation aims to solve $|\V|$ and $\delta$ in the PQ and PV buses. In specific, if bus $1$ to $m$ are PQ buses, $m+1$ to $n-1$ are PV buses, the $n$-th bus is the slack bus. Then there are $n-1$ unknown angels and $m$ unknown magnitude. Our known vector  $\x = \icol{\boldsymbol{\delta}_{n-1}\\|\V|_m}$ has $n+m-1$ unknown variables and same number of known $P$ and $Q$ value based on the table above. Each of the known $P$ and $Q$ can be derived into a power equation in \eqref{node}, so the problem is solvable.
+\subsection{Newton-Raphson Method}
+\begin{enumerate}
+\item N-R method:\\
+Note that a set of differentiable nonlinear equations need to be solved to calculate the unknowns. A common way to solve nonlinear equation is to approximate it linearly at $x_0$ by the first to term of Taylor series:
+\begin{align}
+f(x) \approx f(x_0) + (x-x_0)\frac{\partial f(x_0)}{\partial x}
+\end{align}
+then $x$ can be approximated by:
+\begin{align}
+\label{NR}
+x = x_0 + [ \, \frac{\partial f(x_0)}{\partial x} ] \,^{-1}[f(x)-f(x_0)]
+\end{align}
+This approximation can be repeated until the difference between current estimation and the previously estimated value is lower than a predefined tolerance. This iteration approach is called the Newton-Raphson Method:
+\begin{align}
+x_{k+1} = x_k + [ \,\frac{\partial f(x_k)}{\partial x}] \,^{-1}[f(x)-f(x_k)]
+\end{align}
+when the N-R method is used to find the root of the function, i.e. $f(x)=0$, the iteration in \eqref{NR} reduces to:
+\begin{align}
+x_{k+1} = x_k - [ \,\frac{\partial f(x_k)}{\partial x}] \,^{-1}f(x_k)
+\end{align}
+Similarly, the N-R update equation to find the root of a multi-dimensional nonlinear function $\F(\x)$ is:
+\begin{align}
+\label{MNR}
+\x_{k+1} = \x_k -\J^{-1}\F(\x_k)
+\end{align}
+where $\x$ is a $n$ dimension vector of roots to $\F$, $\J$ is the Jacobian matrix:
+\begin{align*}
+\J = 
+\begin{bmatrix}
+\frac{\partial F_1}{\partial x_1} & \cdots & \frac{\partial F_1}{\partial x_n} \\
+\vdots & \ddots & \vdots \\
+\frac{\partial F_n}{\partial x_1} & \cdots & \frac{\partial F_n}{\partial x_n}
+\end{bmatrix}
+\end{align*}
+\item Solve power flow by N-R method:\\
+Define the $n+m-1$ dimension unknown and function:
+\begin{align}
+\x = \begin{bmatrix}
+\boldsymbol{\delta}\\|\V|
+\end{bmatrix}, 
+\F(\x) = \icol{\boldsymbol{P_{spec}}\\\boldsymbol{Q_{spec}}}-\icol{\Pb_{n-1}\\\Q_m}=\icol{\boldsymbol{\Delta P}_{n-1}\\\boldsymbol{\Delta Q}_m}
+\end{align}
+where $\Pb_{n-1}$ and $\Q_m$ are calculated from \eqref{node}. Then the solution can be obtained from the iteration formulated from \eqref{MNR}:
+\begin{align}
+\begin{bmatrix}
+\boldsymbol{\delta}\\|\V|
+\end{bmatrix}_{k+1}=
+\begin{bmatrix}
+\boldsymbol{\delta}\\|\V|
+\end{bmatrix}_k-\J^{-1}
+\begin{bmatrix}
+\Delta \Pb_{n-1}\\ \Delta \Q_m
+\end{bmatrix}_k
+\end{align}
+The Jacobian matrix can be expressed as four sub-matrix:
+\begin{align*}
+\J = -
+\begin{bmatrix}
+\frac{\partial \Pb}{\partial \boldsymbol{\delta}} & \frac{\partial \Pb}{\partial |\V|} \\
+\frac{\partial \Q}{\partial \boldsymbol{\delta}} & 
+\frac{\partial \Q}{\partial |\V|}
+\end{bmatrix}=
+\begin{bmatrix}
+\Hb & \Nb \\ \K & \Lb
+\end{bmatrix}
+\end{align*}
+where $\Hb$ is a $(n-1)\times(n-1)$ matrix with element $H_{ij}=-\frac{\partial P_i}{\partial \delta_j}$, plug \eqref{node} in, we can get:
+\begin{align}
+H_{ij} = -|\V_i||\V_j|[ \, G_{ij}\sin(\delta_i-\delta_j)-B_{ij}\cos(\delta_i-\delta_j)] \,
+\end{align}
+Similarly, we have:
+\begin{align}
+N_{ij} = -|\V_i||\V_j|[ \, G_{ij}\cos(\delta_i-\delta_j)+B_{ij}\sin(\delta_i-\delta_j)] \,\\
+K_{ij} = |\V_i||\V_j|[ \, G_{ij}\cos(\delta_i-\delta_j)+B_{ij}\sin(\delta_i-\delta_j)] \,\\
+L_{ij} = -|\V_i||\V_j|[ \, G_{ij}\sin(\delta_i-\delta_j)-B_{ij}\cos(\delta_i-\delta_j)] \,
+\end{align}
+when $i=j$:
+\begin{align}
+H_{ii} = |\V_i|^2B_{ii}+Q_i\\
+N_{ii} = -|\V_i|^2G_{ii}-P_i\\
+K_{ii} = |\V_i|^2G_{ii}-P_i\\
+L_{ii} = |\V_i|^2B_{ii}-Qi
+\end{align}
+\end{enumerate}
+\end{document}
