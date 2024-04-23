@@ -55,3 +55,27 @@ for $c_1,\:c_2\in\mathbb{R}.$
 $$
 a\frac{d^{2}y}{dx^{2}}+b\frac{dy}{dx}+cy=d(x) ~~\Rightarrow~~ y = y_p(x)+y_g(x)
 $$
+
+## 4.4 Discrete  and Continuous Distributions
+
+**Discrete RV.**
+
+![image-20240416141341661](C:\Users\Yaze Li\AppData\Roaming\Typora\typora-user-images\image-20240416141341661.png)
+
+**Continuous RV.**
+
+![image-20240416141508739](C:\Users\Yaze Li\AppData\Roaming\Typora\typora-user-images\image-20240416141508739.png)
+
+## 4.5 Excepted Value, Variance & Covariance
+
+**Covariance.** $Cov(X,Y)=E[(X-E[X])(Y-E[Y])]=E[XY]-E[X]E[Y].$
+
+**Correlation.** $\rho(X,Y)=\frac{Cov(X,Y)}{\sqrt{Var(X)Var(Y)}}$​
+
+## 4.6 Order Statistics
+
+If for RV $X_i$ define $Y_n = \min(X_1,X_2,\cdots,X_n), Z_n = \max(X_1,X_2,\cdots,X_n)$, then:
+
+$F_Y(y) = 1-(1-F_X(x))^n, ~~~~F_Z(z) = F_X(x)^n$
+
+$f_Y(y) = nf_X(x)(1-F_X(x))^{n-1},~~~~f_Z(z) = nf_X(x)(F_X(x))^{n-1}$
